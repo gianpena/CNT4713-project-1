@@ -1,0 +1,34 @@
+import socketserver, sys
+from collections import deque
+
+available_ports = deque(range(10000,65537))
+
+class TCPServerRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        try:
+            print(self.request.getpeername())
+            next_data_port = available_ports.popleft()
+            self.request.sendall(f"200\n\n{next_data_port}\0".encode("utf-8"))
+    
+            while True:
+                pieces = [b'']
+                total = 0
+                while b'\0' not in pieces[-1] and total < 4096:
+                    pieces.append(self.request.recv(128))
+                    total += len(pieces[-1])
+        
+                data = b''.join(pieces)
+                command = data.decode("utf-8")
+    
+            available_ports.append(next_data_port)
+        except ConnectionError:
+            print("Connection terminated abruptly.")
+            available_ports.appendleft(next_data_port)
+
+
+if len(sys.argv) < 2:
+    print("Please enter the port.")
+
+HOST, PORT = "127.0.0.1", int(sys.argv[1])
+with socketserver.ThreadingTCPServer((HOST, PORT), TCPServerRequestHandler) as server:
+    server.serve_forever()
