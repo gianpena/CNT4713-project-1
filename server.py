@@ -2,6 +2,11 @@ import socketserver, socket, sys
 from collections import deque
 
 available_ports = deque(range(10000,65537))
+active_users = {}
+
+def broadcast(msg):
+    for socket in active_users.values():
+        socket.sendall(msg)
 
 class TCPServerRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
@@ -20,10 +25,21 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                     while b'\0' not in pieces[-1] and total < 4096:
                         pieces.append(self.request.recv(128))
                         total += len(pieces[-1])
-            
-                    data = b''.join(pieces)
-                    command = data.decode("utf-8")
         
+                    data = b''.join(pieces)
+                    command = data.decode("utf-8").strip("\0")
+                    
+                    if command.startswith("login"):
+                        username = command.split()[1]
+                        if username in active_users:
+                            data_socket.sendall(b"500\n\nThe username you entered is already taken.")
+                            continue
+                        
+                        active_users[username] = self.request
+                        broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
+
+
+    
                 available_ports.append(next_data_port)
         except ConnectionError:
             available_ports.appendleft(next_data_port)
