@@ -18,6 +18,7 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
             # if needed a delay can be added here
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as data_socket:
                 data_socket.connect((ip, next_data_port))
+                username = ""
 
                 while True:
                     pieces = [b'']
@@ -38,6 +39,10 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                         active_users[username] = data_socket
                         broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
                     elif command.startswith("who"):
+                        if not username:
+                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.")
+                            continue
+
                         data_socket.sendall(f"200\n\nACTIVE USERS\n{"\n".join(user for user in active_users.keys())}".encode("utf-8"))
 
 
