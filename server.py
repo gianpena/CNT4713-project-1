@@ -35,7 +35,7 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                             data_socket.sendall(b"500\n\nThe username you entered is already taken.")
                             continue
                         
-                        active_users[username] = self.request
+                        active_users[username] = data_socket
                         broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
 
 
