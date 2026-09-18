@@ -1,4 +1,4 @@
-import socketserver, socket, sys
+import socketserver, socket, sys, re
 from collections import deque
 
 available_ports = deque(range(10000,65537))
@@ -44,7 +44,14 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                             continue
 
                         data_socket.sendall(f"200\n\nACTIVE USERS\n{"\n".join(user for user in active_users.keys())}".encode("utf-8"))
+                    elif command.startswith("broadcast"):
+                        match = re.search(r"^broadcast (.+)$", command)
+                        msg = match.group(1)
+                        if not username:
+                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.")
+                            continue
 
+                        broadcast(f"200\n\nBroadcast\n{username}\n{msg}".encode("utf-8"))
 
     
                 available_ports.append(next_data_port)
