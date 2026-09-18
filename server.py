@@ -52,6 +52,19 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                             continue
 
                         broadcast(f"200\n\nBroadcast\n{username}\n{msg}\0".encode("utf-8"))
+                    elif command.startswith("private"):
+                        if not username:
+                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.\0")
+                            continue
+
+                        match = re.search(r"^private ([^\s]+) (.+)$", command)
+                        user, msg = match.group(1), match.group(2)
+                        if user not in active_users:
+                            data_socket.sendall(f"500\n\nUser {user} is not an active user.\0".encode("utf-8"))
+                            continue
+
+                        active_users[user].sendall(f"200\n\nPrivate\n{username}\n{msg}\0".encode("utf-8"))
+
 
     
                 available_ports.append(next_data_port)
