@@ -37,6 +37,8 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                         
                         active_users[username] = data_socket
                         broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
+                    elif command.startswith("who"):
+                        data_socket.sendall(f"200\n\nACTIVE USERS\n{"\n".join(user for user in active_users.keys())}".encode("utf-8"))
 
 
     
