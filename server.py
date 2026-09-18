@@ -4,6 +4,10 @@ from collections import deque
 available_ports = deque(range(10000,65537))
 active_users = {}
 
+def broadcast(msg):
+    for socket in active_users.values():
+        socket.sendall(msg)
+
 class TCPServerRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         try:
@@ -28,10 +32,11 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                     if command.startswith("login"):
                         username = command.split()[1]
                         if username in active_users:
-                            # failure path
+                            data_socket.sendall(b"500\n\nThe username you entered is already taken.")
                             continue
                         
-                        # success path
+                        active_users[username] = self.request
+                        broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
 
 
     
