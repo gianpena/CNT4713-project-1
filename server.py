@@ -33,25 +33,25 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                     if command.startswith("login"):
                         username = command.split()[1]
                         if username in active_users:
-                            data_socket.sendall(b"500\n\nThe username you entered is already taken.")
+                            data_socket.sendall(b"500\n\nThe username you entered is already taken.\0")
                             continue
                         
                         active_users[username] = data_socket
-                        broadcast(f"200\n\njoin\n{username}".encode("utf-8"))
+                        broadcast(f"200\n\njoin\n{username}\0".encode("utf-8"))
                     elif command.startswith("who"):
                         if not username:
-                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.")
+                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.\0")
                             continue
 
-                        data_socket.sendall(f"200\n\nACTIVE USERS\n{"\n".join(user for user in active_users.keys())}".encode("utf-8"))
+                        data_socket.sendall(f"200\n\nACTIVE USERS\n{"\n".join(user for user in active_users.keys())}\0".encode("utf-8"))
                     elif command.startswith("broadcast"):
                         match = re.search(r"^broadcast (.+)$", command)
                         msg = match.group(1)
                         if not username:
-                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.")
+                            data_socket.sendall(b"500\n\nYou must be logged in to use this command.\0")
                             continue
 
-                        broadcast(f"200\n\nBroadcast\n{username}\n{msg}".encode("utf-8"))
+                        broadcast(f"200\n\nBroadcast\n{username}\n{msg}\0".encode("utf-8"))
 
     
                 available_ports.append(next_data_port)
