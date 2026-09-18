@@ -1,4 +1,4 @@
-import socketserver, sys
+import socketserver, socket, sys
 from collections import deque
 
 available_ports = deque(range(10000,65537))
@@ -6,23 +6,26 @@ available_ports = deque(range(10000,65537))
 class TCPServerRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         try:
-            print(self.request.getpeername())
+            ip = self.request.getpeername()[0]
             next_data_port = available_ports.popleft()
             self.request.sendall(f"200\n\n{next_data_port}\0".encode("utf-8"))
-    
-            while True:
-                pieces = [b'']
-                total = 0
-                while b'\0' not in pieces[-1] and total < 4096:
-                    pieces.append(self.request.recv(128))
-                    total += len(pieces[-1])
+
+            # if needed a delay can be added here
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as data_socket:
+                data_socket.connect((ip, next_data_port))
+
+                while True:
+                    pieces = [b'']
+                    total = 0
+                    while b'\0' not in pieces[-1] and total < 4096:
+                        pieces.append(self.request.recv(128))
+                        total += len(pieces[-1])
+            
+                    data = b''.join(pieces)
+                    command = data.decode("utf-8")
         
-                data = b''.join(pieces)
-                command = data.decode("utf-8")
-    
-            available_ports.append(next_data_port)
+                available_ports.append(next_data_port)
         except ConnectionError:
-            print("Connection terminated abruptly.")
             available_ports.appendleft(next_data_port)
 
 
