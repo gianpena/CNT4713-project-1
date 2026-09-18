@@ -75,6 +75,6 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
 if len(sys.argv) < 2:
     print("Please enter the port.")
 
-HOST, PORT = "127.0.0.1", int(sys.argv[1])
+HOST, PORT = "0.0.0.0", int(sys.argv[1])
 with socketserver.ThreadingTCPServer((HOST, PORT), TCPServerRequestHandler) as server:
     server.serve_forever()
