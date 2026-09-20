@@ -64,9 +64,18 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                             continue
 
                         active_users[user].sendall(f"200\n\nPrivate\n{username}\n{msg}\0".encode("utf-8"))
+                    elif command.startswith("quit"):
+                        if not username:
+                            data_socket.sendall(b"500\nYou must be logged in to use this command.\0")
+                            continue
+
+                        active_users.pop(username, None)
+                        broadcast(f"200\n\nquit\n{username}\0".encode("utf-8"))
+                        break
 
 
-    
+                data_socket.close()
+                self.request.close()
                 available_ports.append(next_data_port)
         except ConnectionError:
             available_ports.appendleft(next_data_port)
