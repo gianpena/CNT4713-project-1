@@ -1,4 +1,4 @@
-import socketserver, socket, sys, re
+import socketserver, socket, sys, re, time
 from collections import deque
 
 available_ports = deque(range(10000,65537))
@@ -19,7 +19,8 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
         try:
             self.request.sendall(f"200\n\n{next_data_port}\0".encode("utf-8"))
 
-            # if needed a delay can be added here
+            print("Connecting to data port...")
+            time.sleep(0.75)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as data_socket:
                 data_socket.connect((ip, next_data_port))
                 username = ""
@@ -33,6 +34,7 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
         
                     data = b''.join(pieces)
                     command = data.decode("utf-8").strip("\0")
+                    print(command)
                     
                     if command.startswith("login"):
                         username = command.split()[1]
@@ -67,14 +69,18 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
                             data_socket.sendall(f"500\n\nUser {user} is not an active user.\0".encode("utf-8"))
                             continue
 
-                        active_users[user].sendall(f"200\n\nPrivate\n{username}\n{msg}\0".encode("utf-8"))
+                        client_side_msg = f"200\n\nPrivate\n{username}\n{msg}\0".encode("utf-8")
+                        active_users[user].sendall(client_side_msg)
+                        data_socket.sendall(client_side_msg)
                     elif command.startswith("quit"):
                         if not username:
                             data_socket.sendall(b"500\nYou must be logged in to use this command.\0")
                             continue
 
+                        quit_msg = f"200\n\nquit\n{username}\0".encode("utf-8")
+                        data_socket.sendall(quit_msg)
                         active_users.pop(username, None)
-                        broadcast(f"200\n\nquit\n{username}\0".encode("utf-8"))
+                        broadcast(quit_msg)
                         break
 
 
