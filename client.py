@@ -123,3 +123,16 @@ while True:
 
     elif parts[0] == "broadcast":
         control_socket.sendall((command + "\0").encode("utf-8"))
+
+    elif parts[0] == "private":
+        current_command = "private"
+        control_socket.sendall((command + "\0").encode("utf-8"))
+        current_command = ""
+
+    elif parts[0] == "quit":
+        current_command = "quit"
+        control_socket.sendall((command + "\0").encode("utf-8"))
+        data_connection.close()
+        control_socket.close()
+        break
+
