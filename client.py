@@ -70,13 +70,8 @@ def listen_for_messages(data_connection):
 
 
 while True:
-    try:
-        command = input()
-    except EOFError:
-        break
+    command = input()
     parts = command.split()
-    if not parts:
-        continue
 
     if parts[0] == "connect":
         server_ip = parts[1]
