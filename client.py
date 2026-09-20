@@ -5,6 +5,7 @@ print("Starting client...")
 
 current_command = ""
 username = ""
+quit_response = threading.Event()
 
 
 def receive_message(connection):
@@ -24,6 +25,7 @@ def listen_for_messages(data_connection):
     while True:
         response = receive_message(data_connection)
         if response is None:
+            quit_response.set()
             break
         status_code, _, data = response.partition("\n\n")
         status_code = status_code.strip()
@@ -33,13 +35,34 @@ def listen_for_messages(data_connection):
             print(f"{status_code} status code received.")
             if data:
                 print(data)
+            failed_command = current_command
             current_command = ""
+            if failed_command == "quit":
+                quit_response.set()
             continue
 
         # Login response
         if current_command == "login" and not parts:
             print(f"{status_code} status code received. Login successful")
             current_command = ""
+
+        # Private message confirmation
+        elif current_command == "private" and not parts:
+            print(f"{status_code} status code received. Message sent.")
+            current_command = ""
+
+        # Quit confirmation
+        elif current_command == "quit" and not parts:
+            print(f"{status_code} status code received.")
+            quit_response.set()
+            break
+
+        # Private message
+        elif parts and parts[0] == "Private":
+            sender = parts[1]
+            message = "\n".join(parts[2:])
+            print(f"{status_code} status code received.")
+            print(f"{sender}: {message}")
 
         # Broadcast message
         elif parts and parts[0] == "Broadcast":
@@ -127,11 +150,14 @@ while True:
     elif parts[0] == "private":
         current_command = "private"
         control_socket.sendall((command + "\0").encode("utf-8"))
-        current_command = ""
 
     elif parts[0] == "quit":
+        quit_response.clear()
         current_command = "quit"
         control_socket.sendall((command + "\0").encode("utf-8"))
+        quit_response.wait()
+        if current_command != "quit":
+            continue
         data_connection.close()
         control_socket.close()
         break
