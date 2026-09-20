@@ -5,14 +5,18 @@ available_ports = deque(range(10000,65537))
 active_users = {}
 
 def broadcast(msg):
-    for socket in active_users.values():
-        socket.sendall(msg)
+    for username, sock in list(active_users.items()):
+        try:
+            sock.sendall(msg)
+        except OSError:
+            active_users.pop(username, None)
 
 class TCPServerRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
+        ip = self.request.getpeername()[0]
+        next_data_port = available_ports.popleft()
+        print(next_data_port)
         try:
-            ip = self.request.getpeername()[0]
-            next_data_port = available_ports.popleft()
             self.request.sendall(f"200\n\n{next_data_port}\0".encode("utf-8"))
 
             # if needed a delay can be added here
@@ -76,9 +80,10 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
 
                 data_socket.close()
                 self.request.close()
-                available_ports.append(next_data_port)
-        except ConnectionError:
-            available_ports.appendleft(next_data_port)
+        except (ConnectionError, OSError):
+            pass
+        finally:
+            available_ports.append(next_data_port)
 
 
 if len(sys.argv) < 2:
