@@ -34,7 +34,6 @@ class TCPServerRequestHandler(socketserver.BaseRequestHandler):
         
                     data = b''.join(pieces)
                     command = data.decode("utf-8").strip("\0")
-                    print(command)
                     
                     if command.startswith("login"):
                         username = command.split()[1]
