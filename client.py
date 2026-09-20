@@ -115,6 +115,7 @@ while True:
             f"Starting data connection on port {data_port}"
         )
         data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         data_socket.bind(("", data_port))
         data_socket.listen(1)
         data_connection, address = data_socket.accept()
