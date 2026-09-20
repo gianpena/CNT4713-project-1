@@ -70,6 +70,15 @@ def listen_for_messages(data_connection):
             if current_command == "login" and parts[1] == username:
                 print(f"{status_code} status code received. Login successful")
                 current_command = ""
+            elif parts[1] != username:
+                print(f"{parts[1]} joined")
+        elif parts and parts[0] == "quit":
+            if status_code == "200" and current_command == "quit" and parts[1] == username:
+                print(f"{status_code} status code received.")
+                quit_response.set()
+                break
+            else:
+                print(f"{parts[1]} left")
         elif current_command == "who":
             if parts and parts[0] == "ACTIVE USERS":
                 parts = parts[1:]
